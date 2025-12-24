@@ -6,10 +6,10 @@ exports.getAllUsers = async () => {
 };
 
 exports.createUser = async (user) => {
-  const { name, email } = user;
+  const { username, password, email, created_at, updated_at } = user;
   const [result] = await db.query(
-    "INSERT INTO user (name, email) VALUES (?, ?)",
-    [name, email]
+    "INSERT INTO user (username, password, email, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+    [username, password, email, created_at, updated_at]
   );
   return result.insertId;
 };
