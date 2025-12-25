@@ -47,6 +47,7 @@ exports.createUser = async (user) => {
   if (!email || !emailFormat.test(email)) {
 	throw new Error("E-posta adresi hatalı. '@' ve alan adı içeren geçerli bir e-posta giriniz.");
   }
+  
 
   const hashPassword = await bcrypt.hash(password, 12);
 
