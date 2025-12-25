@@ -1,20 +1,33 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 
+exports.getUserLogin = async (email) => {
+	const [rows] = await db.query(`
+		SELECT
+			id,
+			username,
+			password
+		FROM users
+		WHERE email = ?
+		LIMIT 1`,
+		[email])
+	return rows[0] || null;
+}
+
 exports.getUser = async (id) => {
-  const [rows] = await db.query(`
-	SELECT
-		id,
-		username,
-		email,
-		created_at createdAt,
-		updated_at updatedAt
-	FROM 
-		users
-	WHERE id = ?
-	LIMIT 1`,
-	[id]);
-  return rows[0] || null;
+  	const [rows] = await db.query(`
+		SELECT
+			id,
+			username,
+			email,
+			created_at createdAt,
+			updated_at updatedAt
+		FROM 
+			users
+		WHERE id = ?
+		LIMIT 1`,
+		[id]);
+	return rows[0] || null;
 };
 
 exports.getAllUsers = async () => {
