@@ -1,5 +1,21 @@
 const User = require("../models/userModel");
 
+exports.getMe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.getUser(userId);
+
+    if (!user) {
+      return res.status(404).json({message: "Kullanıcı Bulunamadı."})
+    }
+
+    res.json(user);
+  } catch (error) {
+    return res.status(500).json({message: res.message})
+  }
+}
+
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
