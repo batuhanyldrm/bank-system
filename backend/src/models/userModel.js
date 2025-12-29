@@ -1,6 +1,8 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 
+const { v4: uuidv4 } = require("uuid");
+
 exports.getUserLogin = async (email) => {
 	const [rows] = await db.query(`
 		SELECT
@@ -61,21 +63,26 @@ exports.createUser = async (user) => {
 		throw new Error("E-posta adresi hatalı. '@' ve alan adı içeren geçerli bir e-posta giriniz.");
 	}
   
-
+	const id = uuidv4();
   	const hashPassword = await bcrypt.hash(password, 12);
 
 	try {
 		const [result] = await db.query(`
 		INSERT INTO users (
+			id,
 			username,
 			password,
 			email,
 			created_at,
 			updated_at
-		) VALUES (?, ?, ?, NOW(), NOW())
-		`, [username, hashPassword, email]);
+		) VALUES (?, ?, ?, ?, NOW(), NOW())
+		`, [id, username, hashPassword, email]);
 
-		return result.insertId;
+		if (result.affectedRows !== 1) {
+			throw new Error("Kullanıcı oluşturulamadı.");
+		}
+
+		return id;
 
 	} catch (err) {
 		if (err.code === "ER_DUP_ENTRY") {
