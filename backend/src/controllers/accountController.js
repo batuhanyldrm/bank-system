@@ -47,3 +47,23 @@ exports.updateAccountName = async (req, res) => {
   }
 };
 
+exports.deleteAccount = async (req, res) => {
+    try {
+        const deletedAccount = await Account.deletedAccount({
+            accountId: req.params.id,
+            userId: req.user.id
+        });
+
+        if (!deletedAccount) {
+            return res.status(400).json({
+                message: "Hesap silinemedi. Bakiyesi sıfır olmayabilir veya hesap bulunamadı."
+            });
+        }
+
+        res.json({ message: "Hesap başarıyla kapatıldı." });
+
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+}
+

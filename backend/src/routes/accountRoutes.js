@@ -6,5 +6,6 @@ const accountController = require("../controllers/accountController");
 
 router.post("/", auth, accountController.createAccount)
 router.put("/:id", auth, accountController.updateAccountName)
+router.delete("/:id", auth, accountController.deleteAccount)
 
 module.exports = router;

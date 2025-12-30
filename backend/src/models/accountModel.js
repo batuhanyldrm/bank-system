@@ -63,3 +63,22 @@ exports.updatedAccountName = async ({ accountId, userId, name }) => {
         throw err;
     }
 }
+
+exports.deletedAccount = async ({ accountId, userId }) => {
+    try {
+        const [result] = await db.query(`
+            UPDATE accounts
+            SET is_active = 0,
+                updated_at = NOW()
+            WHERE id = ?
+                AND user_id = ?
+                AND balance = 0
+                AND is_active = 1
+            
+        `, [accountId, userId]);
+
+        return result.affectedRows === 1;
+    } catch (err) {
+        throw err;
+    }
+}
