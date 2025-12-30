@@ -2,6 +2,30 @@ const db = require("../config/db");
 
 const { v4: uuidv4 } = require("uuid");
 
+exports.getAccount = async ({ accountId, userId }) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT
+                id,
+                number,
+                name,
+                balance,
+                created_at createdAt,
+                updated_at updatedAt
+            FROM accounts
+            WHERE id = ?
+                AND user_id = ?
+                AND is_active = 1
+            LIMIT 1
+        `, [accountId, userId]);
+
+        return rows[0] || null;
+
+    } catch (err) {
+        throw err;
+    }
+}
+
 exports.createAccount = async ({ userId, name }) => {
     const id = uuidv4();
 

@@ -1,5 +1,23 @@
 const Account = require("../models/accountModel");
 
+exports.getAccount = async (req, res) => {
+    try {
+        const account = await Account.getAccount({
+            accountId: req.params.id,
+            userId: req.user.id
+        });
+
+        if (!account) {
+            return res.status(404).json({message: "Hesap Bulunamadı."})
+        }
+
+        res.json(account);
+        
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+}
+
 exports.createAccount = async (req, res) => {
     try {
         const { name } = req.body;
