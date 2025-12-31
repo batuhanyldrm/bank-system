@@ -1,5 +1,26 @@
 const db = require("../config/db");
 
+exports.getAccountTransaction = async ({ accountId, userId }) => {
+    const [result] = await db.query(`
+        SELECT
+            transactions.id,
+            transactions.from_account_id AS fromAccountId,
+            transactions.to_account_id AS toAccountId,
+            transactions.amount,
+            transactions.transaction_date AS transactionDate,
+            transactions.status
+        FROM transactions
+        INNER JOIN accounts
+            ON accounts.id = transactions.from_account_id
+            OR accounts.id = transactions.to_account_id
+        WHERE accounts.id = ?
+            AND accounts.user_id = ?
+        ORDER BY transactions.transaction_date DESC
+    `, [accountId, userId]);
+
+    return result;
+}
+
 exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
     const connection = await db.getConnection();
 
