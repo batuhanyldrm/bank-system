@@ -5,6 +5,8 @@ import { BrowserRouter, Route, Routes } from 'react-router';
 
 //import './index.css'
 import Login from './pages/auth/Login.jsx';
+import { Provider } from 'react-redux';
+import store from './app/store.js';
 
 function Index() {
   return (
@@ -18,6 +20,6 @@ function Index() {
 
 createRoot(document.getElementById('root')).render(
   /* <StrictMode> */
-    <Index />
+    <Provider store={store}><Index /></Provider>
   /* </StrictMode>, */
 )
