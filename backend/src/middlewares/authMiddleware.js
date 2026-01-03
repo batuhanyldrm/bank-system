@@ -1,13 +1,19 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+    let token;
 
-    if (!authHeader) {
-        return res.status(401).json({ message: "Token gerekli." });
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+        token = req.headers.authorization.split(" ")[1];
     }
 
-    const token = authHeader.split(" ")[1];
+    if (!token && req.cookies?.access_token) {
+        token = req.cookies.access_token;
+    }
+
+    if (!token) {
+        return res.status(401).json({ message: "Token gerekli." });
+    }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
