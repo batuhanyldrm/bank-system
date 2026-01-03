@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { loginRequest } from "./authService";
+import { getMeRequest, loginRequest } from "./authService";
 
 export const login = createAsyncThunk(
     "auth/login", async (credentials, { rejectWithValue }) => {
@@ -11,3 +11,17 @@ export const login = createAsyncThunk(
         }
     }
 )
+
+export const getMe = createAsyncThunk(
+  "users/me",
+  async (_, { rejectWithValue }) => {
+    try {
+      const data = await getMeRequest();
+      return data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Authentication failed"
+      );
+    }
+  }
+);

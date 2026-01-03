@@ -9,3 +9,10 @@ export const loginRequest = async ({ email, password }) => {
 
     return resp.data
 }
+
+export const getMeRequest = async () => {
+  const response = await api.get("/users/me", {
+    withCredentials: true,
+  });
+  return response.data;
+};
