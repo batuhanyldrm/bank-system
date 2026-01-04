@@ -1,5 +1,22 @@
 const Account = require("../models/accountModel");
 
+exports.getAccounts = async (req, res) => {
+    try {
+        const accounts = await Account.getAccounts({
+            userId: req.user.id
+        });
+
+        if (!accounts) {
+            return res.status(404).json({ message: "Hesap Bulunamadı." });
+        }
+
+        res.json(accounts);
+
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
 exports.getAccount = async (req, res) => {
     try {
         const account = await Account.getAccount({
