@@ -16,8 +16,13 @@ function Index() {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.auth);
 
- useEffect(() => {
+  useEffect(() => {
+    console.log("Index: componentDidMount");
     dispatch(getMe());
+
+    return () => {
+      console.log("Index: componentWillUnmount");
+    }
   }, [dispatch]);
 
   if (loading) {
