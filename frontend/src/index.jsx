@@ -10,6 +10,7 @@ import store from './app/store.js';
 import { getMe } from './features/auth/authThunks.js';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Accounts from './pages/accounts/Accounts.jsx';
+import TransactionDetail from './pages/transactions/TransactionDetail.jsx';
 
 
 function Index() {
@@ -35,6 +36,7 @@ function Index() {
         <Route path='/login' element={<Login />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Accounts />} />
+          <Route path="/transaction-detail/:id" element={<TransactionDetail />} />
         </Route>
       </Routes>
     </BrowserRouter>
