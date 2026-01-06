@@ -4,19 +4,43 @@ exports.getAccountTransaction = async ({ accountId, userId }) => {
     const [result] = await db.query(`
         SELECT
             transactions.id,
-            transactions.from_account_id AS fromAccountId,
-            transactions.to_account_id AS toAccountId,
+
+            from_acc.number AS fromAccountNumber,
+            from_user.username AS senderUsername,
+
+            to_acc.number AS toAccountNumber,
+            to_user.username AS receiverUsername,
+
             transactions.amount,
             transactions.transaction_date AS transactionDate,
-            transactions.status
-        FROM transactions
-        INNER JOIN accounts
-            ON accounts.id = transactions.from_account_id
-            OR accounts.id = transactions.to_account_id
-        WHERE accounts.id = ?
-            AND accounts.user_id = ?
+            transactions.status,
+            transactions.description,
+
+            CASE
+                WHEN transactions.to_account_id = ? THEN 'IN'
+                WHEN transactions.from_account_id = ? THEN 'OUT'
+            END AS direction
+
+        FROM transactions transactions
+
+        INNER JOIN accounts from_acc 
+            ON from_acc.id = transactions.from_account_id
+        INNER JOIN users from_user 
+            ON from_user.id = from_acc.user_id
+
+        INNER JOIN accounts to_acc 
+            ON to_acc.id = transactions.to_account_id
+        INNER JOIN users to_user 
+            ON to_user.id = to_acc.user_id
+
+        INNER JOIN accounts user_acc
+            ON user_acc.id IN (transactions.from_account_id, transactions.to_account_id)
+
+        WHERE user_acc.id = ?
+          AND user_acc.user_id = ?
+
         ORDER BY transactions.transaction_date DESC
-    `, [accountId, userId]);
+    `, [accountId, accountId, accountId, userId]);
 
     return result;
 }
