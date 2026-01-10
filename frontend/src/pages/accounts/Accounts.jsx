@@ -50,7 +50,7 @@ const Accounts = () => {
               <TableCell component="th" scope="row">{data.name}</TableCell>
               <TableCell align="right">{data.number}</TableCell>
               <TableCell align="right">{data.balance}</TableCell>
-              <TableCell align="right"><Link to={`/transaction-detail/${data.id}`}><VisibilityIcon color="primary" /></Link></TableCell>
+              <TableCell align="right"><Link to={`/transaction-detail/${data.number}`}><VisibilityIcon color="primary" /></Link></TableCell>
             </TableRow>
           ))}
         </TableBody>
