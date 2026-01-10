@@ -1,13 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Box, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Avatar, Stack, Container, Grid } from '@mui/material';
+import { Box, Card, CardContent, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Avatar, Stack, Container, Grid, Button, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { ArrowUpward, ArrowDownward, Person, TrendingUp, TrendingDown, Assessment } from '@mui/icons-material';
 import { getTransactions } from '../../features/transactions/transactionService';
 import { useParams } from 'react-router';
+import AddTransactionModal from '../../components/AddTransactionModal';
 
 export default function TransactionDetail() {
 
   const { id } = useParams();
   const [data, setData] = useState([]);
+  const [type, setType] = useState("All");
+  const [schedule, setSchedule] = useState("");
+
+  const handleTypeChange = (event) => {
+    setType(event.target.value);
+  };
+
+  const handleScheduleChange = (event) => {
+    setSchedule(event.target.value);
+  };
+
+  const [openAddModal, setOpenAddModal] = useState(false);
+
+  const handleOpenAddModal = () => setOpenAddModal(true);
+  const handleCloseAddModal = () => setOpenAddModal(false);
 
   const transactions = async () => {
     try {
@@ -69,8 +85,12 @@ export default function TransactionDetail() {
   }
 
   return (
+    <>
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom fontWeight="bold" color="primary" sx={{ mb: 4 }}>Transfer Geçmişi</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" color="primary">Transfer Geçmişi</Typography>
+        <Button variant="contained" startIcon={<ArrowUpward />} onClick={handleOpenAddModal}>Yeni Transfer</Button>
+      </Box>
       <Grid container spacing={3}  sx={{ mb: 4 }}>
         <Grid item size={{ xs: 12, md: 4 }}>
           <Card elevation={3} sx={{ background: 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)', height: '100%' }}>
@@ -120,6 +140,48 @@ export default function TransactionDetail() {
               </Stack>
             </CardContent>
           </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3}  sx={{ mb: 6 }}>
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <FormControl variant="filled" fullWidth sx={{ minWidth: 120 }}>
+            <InputLabel id="demo-simple-select-standard-label">Tip</InputLabel>
+            <Select
+              labelId="demo-simple-select-standard-label"
+              id="demo-simple-select-standard"
+              value={type}
+              onChange={handleTypeChange}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              <MenuItem value={"All"}>Hepsi</MenuItem>
+              <MenuItem value={"IN"}>Gelen</MenuItem>
+              <MenuItem value={"OUT"}>Giden</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+        <Grid item size={{ xs: 12, md: 6 }}>
+          <FormControl variant="filled" fullWidth sx={{ minWidth: 120 }}>
+            <InputLabel id="demo-simple-select-filled-label">Süre</InputLabel>
+            <Select
+              labelId="demo-simple-select-filled-label"
+              id="demo-simple-select-filled"
+              value={schedule}
+              onChange={handleScheduleChange}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+              <MenuItem value={10}>Son 7 Gün</MenuItem>
+              <MenuItem value={20}>Son 15 Gün</MenuItem>
+              <MenuItem value={30}>Bu Ay</MenuItem>
+              <MenuItem value={30}>Son 3 Ay</MenuItem>
+              <MenuItem value={30}>Son 6 Ay</MenuItem>
+              <MenuItem value={30}>Bu Yıl</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
       </Grid>
 
@@ -190,5 +252,11 @@ export default function TransactionDetail() {
         <Typography variant="body2" color="text.secondary"> Toplam {data.length} işlem gösteriliyor</Typography>
       </Box>
     </Container>
+    <AddTransactionModal
+      open={openAddModal}
+      onClose={handleCloseAddModal}
+      transactions={transactions}
+    />
+    </>
   );
 }

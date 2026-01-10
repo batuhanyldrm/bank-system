@@ -6,3 +6,14 @@ export const getTransactions = async (id) => {
   });
   return response.data;
 };
+
+export const postTransaction = async (fromAccountNumber, toAccountNumber, amount, description) => {
+  const response = await api.post(`/transactions/transfer`, {
+    fromAccountNumber,
+    toAccountNumber,
+    amount,
+    description
+  });
+
+  return response.data
+}
