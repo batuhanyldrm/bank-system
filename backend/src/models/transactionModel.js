@@ -1,51 +1,58 @@
 const db = require("../config/db");
 
-exports.getAccountTransaction = async ({ accountId, userId }) => {
-    const [result] = await db.query(`
-        SELECT
-            transactions.id,
+exports.getAccountTransaction = async ({ accountNumber, userId }) => {
+  const [result] = await db.query(
+    `
+    SELECT
+      transactions.id,
+      transactions.from_account_number AS fromAccountNumber,
+      sender.username       AS senderUsername,
+      transactions.to_account_number   AS toAccountNumber,
+      receiver.username     AS receiverUsername,
+      transactions.amount,
+      transactions.transaction_date    AS transactionDate,
+      transactions.status,
+      transactions.description,
 
-            from_acc.number AS fromAccountNumber,
-            from_user.username AS senderUsername,
+      CASE
+        WHEN transactions.to_account_number = ? THEN 'IN'
+        WHEN transactions.from_account_number = ? THEN 'OUT'
+      END AS direction
 
-            to_acc.number AS toAccountNumber,
-            to_user.username AS receiverUsername,
+    FROM transactions transactions
 
-            transactions.amount,
-            transactions.transaction_date AS transactionDate,
-            transactions.status,
-            transactions.description,
+    LEFT JOIN accounts from_acc
+      ON from_acc.number = transactions.from_account_number
+    LEFT JOIN users sender
+      ON sender.id = from_acc.user_id
 
-            CASE
-                WHEN transactions.to_account_id = ? THEN 'IN'
-                WHEN transactions.from_account_id = ? THEN 'OUT'
-            END AS direction
+    LEFT JOIN accounts to_acc
+      ON to_acc.number = transactions.to_account_number
+    LEFT JOIN users receiver
+      ON receiver.id = to_acc.user_id
 
-        FROM transactions transactions
+    WHERE (transactions.from_account_number = ? OR transactions.to_account_number = ?)
+      AND (
+        from_acc.user_id = ?
+        OR to_acc.user_id = ?
+      )
 
-        INNER JOIN accounts from_acc 
-            ON from_acc.id = transactions.from_account_id
-        INNER JOIN users from_user 
-            ON from_user.id = from_acc.user_id
+    ORDER BY transactions.transaction_date DESC
+    `,
+    [
+      accountNumber, // direction IN
+      accountNumber, // direction OUT
+      accountNumber,
+      accountNumber,
+      userId,
+      userId,
+    ]
+  );
 
-        INNER JOIN accounts to_acc 
-            ON to_acc.id = transactions.to_account_id
-        INNER JOIN users to_user 
-            ON to_user.id = to_acc.user_id
+  return result;
+};
 
-        INNER JOIN accounts user_acc
-            ON user_acc.id IN (transactions.from_account_id, transactions.to_account_id)
-
-        WHERE user_acc.id = ?
-          AND user_acc.user_id = ?
-
-        ORDER BY transactions.transaction_date DESC
-    `, [accountId, accountId, accountId, userId]);
-
-    return result;
-}
-
-exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
+exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount}) => {
     const connection = await db.getConnection();
 
     try {
@@ -55,9 +62,9 @@ exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
         const [[fromAccount]] = await db.query(`
             SELECT balance
             FROM accounts
-            WHERE id = ? AND is_active = 1
+            WHERE number = ? AND is_active = 1
             FOR UPDATE
-        `, [fromAccountId]);
+        `, [fromAccountNumber]);
 
         if (!fromAccount) {
             throw new Error("Gönderen hesap bulunamadı veya aktif değil.");
@@ -67,7 +74,7 @@ exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
             throw new Error("Yetersiz bakiye.");
         }
 
-        if (fromAccountId === toAccountId) {
+        if (fromAccountNumber === toAccountNumber) {
             throw new Error("Aynı hesaba transfer yapılamaz.");
         }
 
@@ -75,8 +82,8 @@ exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
         const [[toAccount]] = await connection.query(`
             SELECT id
             FROM accounts
-            WHERE id = ? AND is_active = 1
-        `, [toAccountId]);
+            WHERE number = ? AND is_active = 1
+        `, [toAccountNumber]);
 
         if (!toAccount) {
             throw new Error("Alıcı hesap bulunamadı veya aktif değil.");
@@ -86,26 +93,26 @@ exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
         await connection.query(`
             UPDATE accounts
             SET balance = balance - ?
-            WHERE id = ?
-        `, [amount, fromAccountId]);
+            WHERE number = ?
+        `, [amount, fromAccountNumber]);
 
         // Alıcı bakiyesini artır
         await connection.query(`
             UPDATE accounts
             SET balance = balance + ?
-            WHERE id = ?
-        `, [amount, toAccountId]);
+            WHERE number = ?
+        `, [amount, toAccountNumber]);
 
         // işlem logu
         await connection.query(`
             INSERT INTO transactions(
-                from_account_id,
-                to_account_id,
+                from_account_number,
+                to_account_number,
                 amount,
                 transaction_date,
                 status
             ) VALUES (?, ?, ?, NOW(), 'SUCCESS')
-        `, [fromAccountId, toAccountId, amount]);
+        `, [fromAccountNumber, toAccountNumber, amount]);
 
         await connection.commit();
 
@@ -115,12 +122,12 @@ exports.tranferMoney = async ({ fromAccountId, toAccountId, amount}) => {
         // FAILED log
         await connection.query(`
             INSERT INTO transactions (
-                from_account_id,
-                to_account_id,
+                from_account_number,
+                to_account_number,
                 amount,
                 status
             ) VALUES (?, ?, ?, 'FAILED')
-            `, [fromAccountId, toAccountId, amount]
+            `, [fromAccountNumber, toAccountNumber, amount]
         );
 
         throw err;

@@ -2,11 +2,11 @@ const Transaction = require("../models/transactionModel");
 
 exports.getAccountTransactions = async (req, res) => {
   try {
-    const { accountId } = req.params;
+    const { accountNumber } = req.params;
     const userId = req.user.id;
 
     const transactions = await Transaction.getAccountTransaction({
-      accountId,
+      accountNumber,
       userId
     });
 
@@ -19,13 +19,13 @@ exports.getAccountTransactions = async (req, res) => {
 
 exports.transfer = async (req, res) => {
   try {
-    const { fromAccountId, toAccountId, amount } = req.body;
+    const { fromAccountNumber, toAccountNumber, amount } = req.body;
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Geçersiz transfer tutarı." });
     }
 
-    await Transaction.tranferMoney({ fromAccountId, toAccountId, amount });
+    await Transaction.tranferMoney({ fromAccountNumber, toAccountNumber, amount });
 
     res.status(201).json({ message: "Transfer başarıyla gerçekleşti." });
 
