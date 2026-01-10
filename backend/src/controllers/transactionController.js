@@ -19,13 +19,13 @@ exports.getAccountTransactions = async (req, res) => {
 
 exports.transfer = async (req, res) => {
   try {
-    const { fromAccountNumber, toAccountNumber, amount } = req.body;
+    const { fromAccountNumber, toAccountNumber, amount, description } = req.body;
 
     if (amount <= 0) {
       return res.status(400).json({ message: "Geçersiz transfer tutarı." });
     }
 
-    await Transaction.tranferMoney({ fromAccountNumber, toAccountNumber, amount });
+    await Transaction.tranferMoney({ fromAccountNumber, toAccountNumber, amount, description });
 
     res.status(201).json({ message: "Transfer başarıyla gerçekleşti." });
 

@@ -52,14 +52,14 @@ exports.getAccountTransaction = async ({ accountNumber, userId }) => {
   return result;
 };
 
-exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount}) => {
+exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount, description}) => {
     const connection = await db.getConnection();
 
     try {
         await connection.beginTransaction();
 
         // Gönderen hesabı kilitler
-        const [[fromAccount]] = await db.query(`
+        const [[fromAccount]] = await connection.query(`
             SELECT balance
             FROM accounts
             WHERE number = ? AND is_active = 1
@@ -76,6 +76,16 @@ exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount}) => 
 
         if (fromAccountNumber === toAccountNumber) {
             throw new Error("Aynı hesaba transfer yapılamaz.");
+        }
+
+        const ACCOUNT_NUMBER_REGEX = /^[A-Z0-9]{18}$/;
+
+        if (!ACCOUNT_NUMBER_REGEX.test(fromAccountNumber)) {
+        throw new Error("Gönderen hesap numarası geçersiz.");
+        }
+
+        if (!ACCOUNT_NUMBER_REGEX.test(toAccountNumber)) {
+        throw new Error("Alıcı hesap numarası geçersiz.");
         }
 
         // Alıcı hesabı
@@ -109,10 +119,11 @@ exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount}) => 
                 from_account_number,
                 to_account_number,
                 amount,
+                description,
                 transaction_date,
                 status
-            ) VALUES (?, ?, ?, NOW(), 'SUCCESS')
-        `, [fromAccountNumber, toAccountNumber, amount]);
+            ) VALUES (?, ?, ?, ?, NOW(), 'SUCCESS')
+        `, [fromAccountNumber, toAccountNumber, amount, description]);
 
         await connection.commit();
 
@@ -125,9 +136,10 @@ exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount}) => 
                 from_account_number,
                 to_account_number,
                 amount,
+                description,
                 status
-            ) VALUES (?, ?, ?, 'FAILED')
-            `, [fromAccountNumber, toAccountNumber, amount]
+            ) VALUES (?, ?, ?, ?, 'FAILED')
+            `, [fromAccountNumber, toAccountNumber, amount, description]
         );
 
         throw err;
