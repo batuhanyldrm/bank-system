@@ -105,9 +105,66 @@ exports.getAccountTransaction = async ({
     params
   );
 
+  const [[account]] = await db.query(
+    `
+    SELECT balance
+    FROM accounts
+    WHERE number = ?
+      AND is_active = 1
+    `,
+    [accountNumber]
+  );
+
+  const balance = account ? account.balance : 0;
+
+  const [[summary]] = await db.query(
+    `
+    SELECT
+      COALESCE(
+        SUM(
+          CASE
+            WHEN transactions.to_account_number = ? 
+            AND transactions.status = 'SUCCESS'
+            THEN transactions.amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS totalIncoming,
+
+      COALESCE(
+        SUM(
+          CASE
+            WHEN transactions.from_account_number = ? 
+            AND transactions.status = 'SUCCESS'
+            THEN transactions.amount
+            ELSE 0
+          END
+        ),
+        0
+      ) AS totalOutgoing
+
+    FROM transactions
+
+    LEFT JOIN accounts from_acc
+      ON from_acc.number = transactions.from_account_number
+    LEFT JOIN accounts to_acc
+      ON to_acc.number = transactions.to_account_number
+
+    ${whereSQL}
+    `,
+    [
+      accountNumber,
+      accountNumber,
+      ...params,
+    ]
+  );
+  summary.balance = balance;
+
   return {
     data: rows,
     pagination: { page, limit, total },
+    summary
   };
 };
 
@@ -129,8 +186,18 @@ exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount, desc
             throw new Error("Gönderen hesap bulunamadı veya aktif değil.");
         }
 
-        if (fromAccount.balance < amount) {
-            throw new Error("Yetersiz bakiye.");
+        const balanceStr = fromAccount.balance;
+        const amountStr = amount;
+
+        const balance = Number(balanceStr);
+        const transferAmount = Number(amountStr);
+
+        if (!Number.isFinite(transferAmount) || transferAmount <= 0) {
+          throw new Error("Geçersiz transfer tutarı.");
+        }
+
+        if (balance < transferAmount) {
+          throw new Error("Yetersiz bakiye.");
         }
 
         if (fromAccountNumber === toAccountNumber) {
