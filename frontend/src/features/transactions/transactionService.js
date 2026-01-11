@@ -1,7 +1,8 @@
 import api from "../../services/api"
 
-export const getTransactions = async (id) => {
+export const getTransactions = async (id, params) => {
   const response = await api.get(`/transactions/account/${id}`, {
+    params,
     withCredentials: true,
   });
   return response.data;
