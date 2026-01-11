@@ -5,13 +5,18 @@ exports.getAccountTransactions = async (req, res) => {
     const { accountNumber } = req.params;
     const userId = req.user.id;
 
+    const { filterDirection, filterPeriod, page = 1, limit = 10 } = req.query;
+
     const transactions = await Transaction.getAccountTransaction({
       accountNumber,
-      userId
+      userId,
+      filterDirection,
+      filterPeriod,
+      page: Number(page),
+      limit: Number(limit),
     });
 
     return res.json(transactions);
-
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

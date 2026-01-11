@@ -1,25 +1,70 @@
 const db = require("../config/db");
 
-exports.getAccountTransaction = async ({ accountNumber, userId }) => {
-  const [result] = await db.query(
+const buildDateCondition = (filterPeriod) => {
+  const days = Number(filterPeriod);
+
+  if (!Number.isInteger(days) || days <= 0 || days > 365) {
+    return null;
+  }
+
+  return `transactions.transaction_date >= DATE_SUB(NOW(), INTERVAL ${days} DAY)`;
+};
+
+exports.getAccountTransaction = async ({
+  accountNumber,
+  userId,
+  filterDirection,
+  filterPeriod,
+  page,
+  limit,
+}) => {
+  const offset = (page - 1) * limit;
+
+  const whereConditions = [];
+  const params = [];
+
+  whereConditions.push("(transactions.from_account_number = ? OR transactions.to_account_number = ?)");
+  params.push(accountNumber, accountNumber);
+
+  whereConditions.push("(from_acc.user_id = ? OR to_acc.user_id = ?)");
+  params.push(userId, userId);
+
+  if (filterDirection === "IN") {
+    whereConditions.push("transactions.to_account_number = ?");
+    params.push(accountNumber);
+  }
+
+  if (filterDirection === "OUT") {
+    whereConditions.push("transactions.from_account_number = ?");
+    params.push(accountNumber);
+  }
+
+  const dateCondition = buildDateCondition(filterPeriod);
+  if (dateCondition) {
+    whereConditions.push(dateCondition);
+  }
+
+  const whereSQL = `WHERE ${whereConditions.join(" AND ")}`;
+
+  const [rows] = await db.query(
     `
     SELECT
       transactions.id,
       transactions.from_account_number AS fromAccountNumber,
-      sender.username       AS senderUsername,
-      transactions.to_account_number   AS toAccountNumber,
-      receiver.username     AS receiverUsername,
+      sender.username AS senderUsername,
+      transactions.to_account_number AS toAccountNumber,
+      receiver.username AS receiverUsername,
       transactions.amount,
-      transactions.transaction_date    AS transactionDate,
+      transactions.transaction_date AS transactionDate,
       transactions.status,
       transactions.description,
 
       CASE
         WHEN transactions.to_account_number = ? THEN 'IN'
         WHEN transactions.from_account_number = ? THEN 'OUT'
-      END AS direction
+      END AS filterDirection
 
-    FROM transactions transactions
+    FROM transactions
 
     LEFT JOIN accounts from_acc
       ON from_acc.number = transactions.from_account_number
@@ -31,25 +76,39 @@ exports.getAccountTransaction = async ({ accountNumber, userId }) => {
     LEFT JOIN users receiver
       ON receiver.id = to_acc.user_id
 
-    WHERE (transactions.from_account_number = ? OR transactions.to_account_number = ?)
-      AND (
-        from_acc.user_id = ?
-        OR to_acc.user_id = ?
-      )
+    ${whereSQL}
 
     ORDER BY transactions.transaction_date DESC
+    LIMIT ? OFFSET ?
     `,
     [
-      accountNumber, // direction IN
-      accountNumber, // direction OUT
       accountNumber,
       accountNumber,
-      userId,
-      userId,
+      ...params,
+      limit,
+      offset,
     ]
   );
 
-  return result;
+  const [[{ total }]] = await db.query(
+    `
+    SELECT COUNT(*) AS total
+    FROM transactions
+
+    LEFT JOIN accounts from_acc
+      ON from_acc.number = transactions.from_account_number
+    LEFT JOIN accounts to_acc
+      ON to_acc.number = transactions.to_account_number
+
+    ${whereSQL}
+    `,
+    params
+  );
+
+  return {
+    data: rows,
+    pagination: { page, limit, total },
+  };
 };
 
 exports.tranferMoney = async ({ fromAccountNumber, toAccountNumber, amount, description}) => {
