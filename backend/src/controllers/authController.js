@@ -26,8 +26,15 @@ exports.login = async (req, res) => {
       { expiresIn: "15m" }
     );
 
+    res.cookie("access_token", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      maxAge: 15 * 60 * 1000,
+      path: "/",
+    });
+
     res.json({
-      token,
       user: {
         id: user.id,
         username: user.username,
