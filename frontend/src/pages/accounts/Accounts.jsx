@@ -7,9 +7,12 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
 
 import { getAccounts } from '../../features/accounts/accountService'
 import { Link } from 'react-router';
+import { Box, Button, Typography } from '@mui/material';
 
 const Accounts = () => {
 
@@ -34,28 +37,34 @@ const Accounts = () => {
   }, [])
   
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="simple table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Hesap Adı</TableCell>
-            <TableCell align="right">Hesap Numarası</TableCell>
-            <TableCell align="right">Hesap Bakiyesi</TableCell>
-            <TableCell align="right">İşlemler</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.map((data) => (
-            <TableRow key={data.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-              <TableCell component="th" scope="row">{data.name}</TableCell>
-              <TableCell align="right">{data.number}</TableCell>
-              <TableCell align="right">{data.balance}</TableCell>
-              <TableCell align="right"><Link to={`/transaction-detail/${data.number}`}><VisibilityIcon color="primary" /></Link></TableCell>
+    <>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6" fontWeight="bold">Hesaplarım</Typography>
+        <Button variant="contained" startIcon={<AddIcon />} >Hesap Ekle</Button>
+      </Box>
+      <TableContainer component={Paper} elevation={3}>
+        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell>Hesap Adı</TableCell>
+              <TableCell align="right">Hesap Numarası</TableCell>
+              <TableCell align="right">Hesap Bakiyesi</TableCell>
+              <TableCell align="right">İşlemler</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {data.map((data) => (
+              <TableRow key={data.id} hover sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#fafafa' }}}>
+                <TableCell component="th" scope="row">{data.name}</TableCell>
+                <TableCell align="right">{data.number}</TableCell>
+                <TableCell align="right">{data.balance}</TableCell>
+                <TableCell align="right"><IconButton component={Link} to={`/transaction-detail/${data.number}`} color="primary" ><VisibilityIcon /></IconButton></TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
   )
 }
 
