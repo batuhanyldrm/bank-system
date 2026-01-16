@@ -6,3 +6,11 @@ export const getAccounts = async () => {
   });
   return response.data;
 };
+
+export const postAccount = async (name) => {
+  const response = await api.post(`/accounts`, {
+    name
+  });
+
+  return response.data;
+}

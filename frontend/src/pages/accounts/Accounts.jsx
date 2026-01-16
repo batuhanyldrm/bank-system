@@ -13,10 +13,15 @@ import AddIcon from '@mui/icons-material/Add';
 import { getAccounts } from '../../features/accounts/accountService'
 import { Link } from 'react-router';
 import { Box, Button, Typography } from '@mui/material';
+import AddAccountModal from '../../components/AddAccountModal';
 
 const Accounts = () => {
 
   const [data, setData] = useState([]);
+  const [openAddModal, setOpenAddModal] = useState(false);
+
+  const handleOpenAddModal = () => setOpenAddModal(true);
+  const handleCloseAddModal = () => setOpenAddModal(false);
 
   const getAllAccounts = async () => {
     try {
@@ -40,7 +45,7 @@ const Accounts = () => {
     <>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" fontWeight="bold">Hesaplarım</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} >Hesap Ekle</Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenAddModal}>Hesap Ekle</Button>
       </Box>
       <TableContainer component={Paper} elevation={3}>
         <Table sx={{ minWidth: 650 }} aria-label="simple table">
@@ -64,6 +69,11 @@ const Accounts = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      <AddAccountModal
+        open={openAddModal}
+        onClose={handleCloseAddModal}
+        accounts={getAllAccounts}
+      />
     </>
   )
 }
